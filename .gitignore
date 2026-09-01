@@ -141,3 +141,78 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# ---------------------------------------------------------------------------
+# Project hygiene and secrets. Added 2026-08-31 alongside the docs scaffold.
+# The block above is GitHub's Node template; this block covers OS junk, local
+# agent state, and credential patterns. Keep both.
+# ---------------------------------------------------------------------------
+
+# OS artifacts
+.DS_Store
+**/.DS_Store
+Thumbs.db
+Desktop.ini
+._*
+.Spotlight-V100
+.Trashes
+
+# Local agent and editor state
+.claude/
+.codex/
+.cursor/
+.aider*
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local env and secrets. Example files are explicitly allowed.
+.env
+.env.*
+!.env.example
+!.env.example.*
+*.env
+*.env.*
+!*.env.example
+!*.env.example.*
+*.local
+*.local.*
+
+# Tokens, credentials, and private config
+*.token
+*.token.*
+!*.token.example
+!*.token.example.*
+*token*.json
+!*token*.example.json
+*credentials*.json
+!*credentials*.example.json
+*client_secret*.json
+!*client_secret*.example.json
+*.pem
+*.key
+!*.pub.key
+*.local.json
+
+# Model provider keys are the specific risk for this project.
+# Never commit an API key. Use .env locally and repository secrets in CI.
+.anthropic
+.openai
+**/apikey*
+**/api_key*
+
+# Secrets folders: ignore contents, allow examples
+secrets/*
+!secrets/.gitignore
+!secrets/*.example
+!secrets/*.example.*
+**/secrets/*
+!**/secrets/.gitignore
+!**/secrets/*.example
+!**/secrets/*.example.*
+
+# Scratch and local-only working files
+scratch/
+tmp/
+*.tmp
