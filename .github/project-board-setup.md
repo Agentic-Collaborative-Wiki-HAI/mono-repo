@@ -16,8 +16,16 @@ The `Status` field should have these options, in this order:
 | Issue reopened | Moved back to **Backlog** for re-triage |
 | `blocked` label added | Moved to **Blocked** |
 | `blocked` label removed | Moved to **On Deck** |
+| Card dragged out of Done while the issue is closed | Issue **reopened** (timer, every 15 min) |
+| Issue has open native blockers (`blocked by #N`) | Moved to **Blocked** (timer, every 15 min) |
 
 **Nothing automates Upcoming or Active.** Those are human judgment about what is next and what is being worked on, and automating them would fight the person moving cards.
+
+**Two paths into Blocked, deliberately.** Native issue dependencies handle "blocked by ticket #12"; the `blocked` label handles everything that is not a ticket — waiting on a person, a decision, a date. Dependencies are a *relationship*, not a status, so they do not move a card on their own; `board-reconcile.yaml` bridges that.
+
+**Unblocking is not symmetric.** Clearing a dependency does not move a card out of Blocked, because the issue may still be held by the label. Removing the `blocked` label moves it to On Deck. Otherwise, move it by hand.
+
+**The two timer-based reconciliations exist because GitHub has no event for them.** Board changes cannot trigger a repo workflow, GitHub ships auto-close but no auto-reopen, and dependency changes do not fire a usable event. `board-reconcile.yaml` supports `workflow_dispatch` with a dry-run input if you want to see what it would do before it does it.
 
 ## 1. Create the token
 The workflows need a token that can write to org-level Projects. `GITHUB_TOKEN` cannot — it has no Projects scope.

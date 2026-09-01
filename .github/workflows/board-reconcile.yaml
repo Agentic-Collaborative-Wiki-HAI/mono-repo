@@ -1,0 +1,133 @@
+name: Board reconciliation
+
+# Two things GitHub gives no event for, both handled on a timer.
+#
+# 1. Board -> issue reopen. Moving a card out of Done cannot trigger a repo
+#    workflow (projects_v2_item events do not reach the repo), and GitHub
+#    ships auto-close but no auto-reopen. So we poll.
+#
+# 2. Native issue dependencies -> Blocked column. Dependencies are a
+#    relationship, not a status, so setting "blocked by #12" does not move the
+#    card on its own. This gives dependencies and the `blocked` label two
+#    paths into the same column.
+
+on:
+  schedule:
+    # Every 15 minutes. Fine for a team this size; drop to */5 if the lag
+    # becomes annoying. Actions minutes are free on public repos.
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (log without changing anything)'
+        required: false
+        default: 'true'
+        type: boolean
+
+env:
+  GH_TOKEN: ${{ secrets.ACTIONS_TOKEN }}
+  PROJECT_ID: ${{ vars.PROJECT_ID }}
+  STATUS_FIELD_ID: ${{ vars.STATUS_FIELD_ID }}
+  DONE_OPTION_ID: ${{ vars.DONE_OPTION_ID }}
+  BLOCKED_OPTION_ID: ${{ vars.BLOCKED_OPTION_ID }}
+  # Skip issues closed within this window — closed-to-done may still be
+  # moving a freshly-closed issue into Done, and reopening it would fight that.
+  FRESH_CLOSE_SECONDS: "600"
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch board items
+        run: |
+          CURSOR=""
+          : > /tmp/items.ndjson
+
+          while true; do
+            if [ -n "$CURSOR" ]; then
+              AFTER="-f cursor=$CURSOR"
+              Q='query($project: ID!, $cursor: String!) { node(id: $project) { ... on ProjectV2 { items(first: 100, after: $cursor) { pageInfo { hasNextPage endCursor } nodes { id fieldValueByName(name: "Status") { ... on ProjectV2ItemFieldSingleSelectValue { optionId } } content { ... on Issue { number state closedAt repository { nameWithOwner } issueDependenciesSummary { blockedBy } } } } } } } }'
+              RESULT=$(gh api graphql -f query="$Q" -f project="$PROJECT_ID" $AFTER)
+            else
+              Q='query($project: ID!) { node(id: $project) { ... on ProjectV2 { items(first: 100) { pageInfo { hasNextPage endCursor } nodes { id fieldValueByName(name: "Status") { ... on ProjectV2ItemFieldSingleSelectValue { optionId } } content { ... on Issue { number state closedAt repository { nameWithOwner } issueDependenciesSummary { blockedBy } } } } } } } }'
+              RESULT=$(gh api graphql -f query="$Q" -f project="$PROJECT_ID")
+            fi
+
+            echo "$RESULT" | jq -c '.data.node.items.nodes[]' >> /tmp/items.ndjson
+            HAS_NEXT=$(echo "$RESULT" | jq -r '.data.node.items.pageInfo.hasNextPage')
+            CURSOR=$(echo "$RESULT" | jq -r '.data.node.items.pageInfo.endCursor')
+            [ "$HAS_NEXT" != "true" ] && break
+          done
+
+          echo "Fetched $(wc -l < /tmp/items.ndjson) board items."
+
+      - name: Reopen closed issues whose card is out of Done
+        run: |
+          DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
+          NOW=$(date +%s)
+
+          while IFS= read -r item; do
+            OPTION_ID=$(echo "$item" | jq -r '.fieldValueByName.optionId // ""')
+            NUMBER=$(echo "$item" | jq -r '.content.number // ""')
+            STATE=$(echo "$item" | jq -r '.content.state // ""')
+            CLOSED_AT=$(echo "$item" | jq -r '.content.closedAt // ""')
+            REPO=$(echo "$item" | jq -r '.content.repository.nameWithOwner // ""')
+
+            [ "$STATE" != "CLOSED" ] && continue
+            [ -z "$OPTION_ID" ] && continue
+            [ "$OPTION_ID" == "$DONE_OPTION_ID" ] && continue
+            { [ -z "$NUMBER" ] || [ -z "$REPO" ]; } && continue
+
+            if [ -n "$CLOSED_AT" ]; then
+              CLOSED_TS=$(date -d "$CLOSED_AT" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "$CLOSED_AT" +%s)
+              if [ $(( NOW - CLOSED_TS )) -lt "$FRESH_CLOSE_SECONDS" ]; then
+                echo "Skip #$NUMBER — closed less than ${FRESH_CLOSE_SECONDS}s ago."
+                continue
+              fi
+            fi
+
+            echo "Reopen #$NUMBER — card is out of Done but the issue is closed."
+            if [ "$DRY_RUN" != "true" ]; then
+              gh issue reopen "$NUMBER" --repo "$REPO" && echo "  → reopened."
+            fi
+          done < /tmp/items.ndjson
+
+      - name: Move cards to Blocked when the issue has open blockers
+        run: |
+          DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
+
+          while IFS= read -r item; do
+            ITEM_ID=$(echo "$item" | jq -r '.id // ""')
+            OPTION_ID=$(echo "$item" | jq -r '.fieldValueByName.optionId // ""')
+            NUMBER=$(echo "$item" | jq -r '.content.number // ""')
+            STATE=$(echo "$item" | jq -r '.content.state // ""')
+            BLOCKERS=$(echo "$item" | jq -r '.content.issueDependenciesSummary.blockedBy // 0')
+
+            [ "$STATE" != "OPEN" ] && continue
+            [ "$BLOCKERS" -eq 0 ] 2>/dev/null && continue
+            [ -z "$ITEM_ID" ] && continue
+            # Already Blocked, or finished — leave it alone.
+            [ "$OPTION_ID" == "$BLOCKED_OPTION_ID" ] && continue
+            [ "$OPTION_ID" == "$DONE_OPTION_ID" ] && continue
+
+            echo "Move #$NUMBER to Blocked — $BLOCKERS open blocker(s)."
+            if [ "$DRY_RUN" != "true" ]; then
+              gh api graphql -f query='
+                mutation($project: ID!, $item: ID!, $field: ID!, $option: String!) {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: $project, itemId: $item, fieldId: $field,
+                    value: { singleSelectOptionId: $option }
+                  }) { projectV2Item { id } }
+                }' \
+                -f project="$PROJECT_ID" -f item="$ITEM_ID" \
+                -f field="$STATUS_FIELD_ID" -f option="$BLOCKED_OPTION_ID" >/dev/null
+              echo "  → moved."
+            fi
+          done < /tmp/items.ndjson
+
+          # Deliberately NOT symmetric: clearing dependencies does not move the
+          # card out of Blocked. An issue can be blocked for two independent
+          # reasons (a dependency and the `blocked` label), and auto-unblocking
+          # from one signal would wrongly unblock something still held by the
+          # other. Removing the `blocked` label moves it to On Deck; otherwise
+          # move it by hand.
