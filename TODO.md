@@ -1,13 +1,13 @@
 # TODO
-Spike index and coordination map. Detailed state lives in each spike's `.todo.md`; this file stays scannable.
+Spike index. Detailed state lives in each spike's `.todo.md`; this file stays scannable.
 
-**GitHub Issues and the project board are the live work tracker.** This file is the map of *investigations* — the questions we are trying to retire.
+**GitHub Issues and the project board are the live work tracker for humans.** This file indexes the repo's spikes — bounded chunks of work that carry their own docs. See [AGENTS.md](AGENTS.md) for how the two relate.
 
 ## Active Spikes
 None yet. The five below are proposed and unclaimed.
 
-## Proposed Spikes — Unclaimed
-Pick one that interests you. Open an issue, claim it, and create `docs/active-spikes/<name>.md` plus `<name>.todo.md`.
+## Open Questions — Not Yet Spikes
+These need answering. Most will become issues; the ones with real work behind them will get a spike doc pair in `docs/active-spikes/`.
 
 **Agent / model.** Can a *cheap* model reliably search a small shared corpus, read documents, call tools, and propose a controlled edit without touching unrelated content? Test several cost tiers and providers. Track task success, failure mode, latency, tokens, and dollars. **The question is what is cheapest-good-enough, not what is best.**
 

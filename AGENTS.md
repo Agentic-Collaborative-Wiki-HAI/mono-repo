@@ -32,9 +32,26 @@ Current local skills: `run-project-spike`, `commit-work`, `triage-project-misc`,
 **Do not create a `README.md` inside `docs/` or its subfolders.** `TODO.md` is the index; `ls` handles the rest.
 
 ## How Work Is Organized
-**Spikes, not assigned roles.** A spike is a bounded investigation that retires a specific uncertainty — "can Wiki.js expose enough API surface to support agent-proposed edits?" — and produces evidence. People self-select the questions they want to answer.
+**People self-select work rather than being assigned roles.** The team's actual capacities are not yet known, and small real work reveals them better than role labels handed out up front.
 
-This is deliberate. The team's actual technical capacity is not yet known, and small real work reveals it better than role labels assigned up front.
+### The vocabulary
+**Epic** — an issue type. A durable topic that accumulates work over time and stays open. *Design the interface.*
+
+**Issue** — a piece of work someone owns and others need visibility into. Most issues are plain issues; a plain issue **is** a task, so it needs no type saying so.
+
+**Spike** — a **bounded chunk of work with its own docs**, living in `docs/active-spikes/` as a concept doc plus a `.todo.md`. **Not** an XP-style throwaway investigation — a spike here produces real work.
+
+**task** — lowercase. A checkbox inside a spike's `.todo.md`. Never a GitHub object.
+
+### Why spikes are bounded
+A spike has an end. **When related work comes back around, open a successor rather than reopening the original** — `wcag-seo` then `wcag-seo2`. Reopening makes the doc sprawl until it is no longer followable, and the whole point of the concept doc is that someone can read it and understand the shape of the work.
+
+An epic spans one or more spikes over time. **Not every issue has a spike** — design and research work done in Figma or elsewhere is tracked here for visibility with no repo docs at all, and that is fine.
+
+### Where each audience reads
+**Issues and the board are for humans.** The `.todo.md` is agent working memory and is far more granular. They do not compete because they are not at the same resolution.
+
+Archived spikes are deliberately kept rather than deleted: they are how a future agent gets up to speed on what was already tried.
 
 When an architecture question gets settled, write it into `docs/decisions/` so it survives the conversation that produced it.
 
