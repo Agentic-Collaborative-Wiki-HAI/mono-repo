@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Ask a question or float an idea
+    url: https://github.com/orgs/Agentic-Collaborative-Wiki-HAI/discussions
+    about: Not everything needs to be an issue. Use Discussions for open questions, half-formed ideas, and anything you want a conversation about rather than a task.

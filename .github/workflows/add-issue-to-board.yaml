@@ -1,0 +1,59 @@
+name: Add new issue to project board
+
+on:
+  issues:
+    types:
+      - opened
+      # Deliberately NOT triggered on `labeled`. Re-running on every label
+      # change re-sets the item's status, which clobbers manual board moves —
+      # an item in Active would bounce back to Backlog the next time anyone
+      # added a label.
+
+env:
+  GH_TOKEN: ${{ secrets.ACTIONS_TOKEN }}
+  PROJECT_ID: ${{ vars.PROJECT_ID }}
+  STATUS_FIELD_ID: ${{ vars.STATUS_FIELD_ID }}
+  BACKLOG_OPTION_ID: ${{ vars.BACKLOG_OPTION_ID }}
+
+jobs:
+  add-to-board:
+    if: github.event.issue != null
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add issue to board under "Backlog"
+        run: |
+          ISSUE_NODE_ID="${{ github.event.issue.node_id }}"
+
+          # addProjectV2ItemById is idempotent: it returns the existing item ID
+          # if the issue is already on the board, so a non-empty ID is normal.
+          # An empty ID means the add genuinely failed.
+          ITEM_ID=$(gh api graphql -f query='
+            mutation($project: ID!, $content: ID!) {
+              addProjectV2ItemById(input: { projectId: $project, contentId: $content }) {
+                item { id }
+              }
+            }' \
+            -f project="$PROJECT_ID" \
+            -f content="$ISSUE_NODE_ID" \
+            --jq '.data.addProjectV2ItemById.item.id')
+
+          if [ -z "$ITEM_ID" ]; then
+            echo "Could not add issue to board — skipping status set."
+            exit 0
+          fi
+
+          echo "Added item $ITEM_ID — setting status to 'Backlog'..."
+
+          gh api graphql -f query='
+            mutation($project: ID!, $item: ID!, $field: ID!, $option: String!) {
+              updateProjectV2ItemFieldValue(input: {
+                projectId: $project, itemId: $item, fieldId: $field,
+                value: { singleSelectOptionId: $option }
+              }) { projectV2Item { id } }
+            }' \
+            -f project="$PROJECT_ID" \
+            -f item="$ITEM_ID" \
+            -f field="$STATUS_FIELD_ID" \
+            -f option="$BACKLOG_OPTION_ID"
+
+          echo "Done — issue is on the board in 'Backlog'."

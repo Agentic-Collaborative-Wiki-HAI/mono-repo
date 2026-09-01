@@ -1,0 +1,32 @@
+name: Architecture decision
+description: A choice that will outlive the conversation that produced it. Resolves into a numbered record in docs/decisions/.
+title: "Decide: "
+labels: ["decision"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this when a decision needs discussion before it is made. When it is settled, write it up in `docs/decisions/` as a numbered record and close this issue with a link to it.
+  - type: textarea
+    id: question
+    attributes:
+      label: What are we deciding?
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: Options on the table
+      description: Include the option of doing nothing, where that is real.
+    validations:
+      required: true
+  - type: textarea
+    id: stakes
+    attributes:
+      label: What does this affect?
+      description: What becomes easier or harder depending on which way this goes? What is hard to reverse later?
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence we have or need
+      description: Is there a spike that should happen before deciding?

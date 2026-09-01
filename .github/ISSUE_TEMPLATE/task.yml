@@ -1,0 +1,35 @@
+name: Task
+description: Work where we already know what to do. Use Spike instead if the answer is unknown.
+title: ""
+labels: ["task"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What needs doing
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why this, and anything the person picking it up would need to know.
+  - type: textarea
+    id: done
+    attributes:
+      label: Definition of done
+      description: How we know it is finished.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Design / UX
+        - Frontend
+        - Backend / infrastructure
+        - Agent / model
+        - Research / evaluation
+        - Docs
+        - Other / not sure
+    validations:
+      required: true

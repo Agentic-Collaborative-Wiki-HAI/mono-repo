@@ -1,0 +1,42 @@
+name: Spike
+description: A bounded investigation that answers a specific question. Use this for anything where we do not yet know the answer.
+title: "Spike: "
+labels: ["spike"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A spike retires an uncertainty. It is done when we can answer the question, even if the answer is "no" — a spike that concludes we should not do something is a successful spike.
+  - type: textarea
+    id: question
+    attributes:
+      label: The question
+      description: What do we not know? Be specific enough that someone can tell when it has been answered.
+      placeholder: Can Wiki.js expose enough API surface to write revisions programmatically and surface a proposal diff in its UI?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it matters
+      description: What decision is blocked until we know this?
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: What "done" looks like
+      description: What evidence would settle it? A working script, a comparison table, a screenshot, a written recommendation.
+    validations:
+      required: true
+  - type: input
+    id: timebox
+    attributes:
+      label: Timebox
+      description: Roughly how long before we stop and report what we found, even if incomplete?
+      placeholder: A few hours / one week
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Anything else — prior art, links, things already tried.

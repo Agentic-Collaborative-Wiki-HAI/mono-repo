@@ -1,0 +1,25 @@
+name: Research / evaluation
+description: User research, evaluation design, literature, or anything supporting the HAI research component.
+title: ""
+labels: ["research"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Reminder: do not put participant data in this repository.** Transcripts, notes, recordings, and anything identifying a research participant stay out of a public repo. Consent and IRB questions are unresolved — ask before collecting anything.
+  - type: textarea
+    id: what
+    attributes:
+      label: What are we trying to learn?
+    validations:
+      required: true
+  - type: textarea
+    id: method
+    attributes:
+      label: How
+      description: Interviews, walkthrough, literature review, benchmark, something else.
+  - type: textarea
+    id: output
+    attributes:
+      label: What it produces
+      description: What artifact comes out, and where does it live?
