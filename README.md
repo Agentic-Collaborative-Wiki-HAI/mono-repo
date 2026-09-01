@@ -80,9 +80,9 @@ Nothing to run yet — the stack is not chosen. See [TODO.md](TODO.md) for open 
 
 ## How we work
 
-Work is organized around **spikes** — bounded investigations that retire a specific uncertainty — rather than assigned roles. Pick a question you want answered. See [skills/run-project-spike/SKILL.md](skills/run-project-spike/SKILL.md).
+**People pick up work rather than being assigned it.** Issues and the project board are the coordination surface; architecture decisions land in `docs/decisions/` so they survive the conversation that produced them.
 
-Issues and the project board are the coordination surface. Architecture decisions land in `docs/decisions/` so they survive the conversation that produced them.
+A few words mean specific things here — **epic**, **spike**, **task** — and they are defined in [docs/decisions/0003](docs/decisions/0003-how-we-name-and-organize-work.md). The short version: an epic is an open-ended topic, a spike is a bounded chunk of work with its own docs, and a plain issue is just a piece of work someone owns.
 
 ## License
 
